@@ -14,6 +14,7 @@ This documentation describes the design and implementation of a data warehouse t
       - [Staging Area](#staging-area)
       - [Raw and Business Vault](#raw-and-business-vault)
       - [InfoMart](#infomart)
+  - [Open Questions](#open-questions)
 
 ## Identification of Challanges
 
@@ -63,7 +64,7 @@ The following challenges must be addressed to ensure data integrity, consistency
 
     False positives may arise during hash-based change detection (e.g., due to whitespace or case differences), or overly strict data quality rules in staging. These can lead to unnecessary versioning, incorrect record associations, or valid data being flagged as invalid. Proper normalization, thresholding, and validation logic are essential to mitigate this risk.
 
-    
+
 ## Flow Diagram
 
 This flow diagram illustrates the end-to-end data pipeline, from source systems to business intelligence-ready InfoMarts, using a Data Vault approach.
@@ -153,3 +154,19 @@ These fact and dimension tables are joined to support use cases such as:
 3. Delivery delays
 
 4. Average sales price per product
+
+## Open Questions
+
+To support a scalable and reliable solution, the following strategic and operational questions must be addressed prior to final implementation.
+
+1. How are cancellations and returns handled in the order data?
+2. What is the required data refresh frequency for the InfoMart?
+3. Are there business rules for handling partially delivered or split orders?
+4. What is the retention policy for staging and vault data?
+5. Will multiple freight forwarders be introduced in the future?
+6. Do reporting users need real-time or historical snapshots (e.g., end-of-month sales position)?
+7. How should duplicate orders or deliveries from source systems be handled?
+8. Should we include rejected or failed deliveries in delivery performance metrics?
+9. Are there future plans to add additional data sources (e.g., invoicing, customer feedback, inventory)?
+10. Do we need to support multi-language or multi-currency reporting?
+11. What level of access control or data security is required for different user groups?
