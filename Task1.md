@@ -115,7 +115,7 @@ The following diagram illustrates the **end-to-end data flow** across the differ
 
 This structured flow ensures **data integrity, scalability, and traceability** from source ingestion to final analytics.
 
-![Flow Diagram](image.png)
+![Flow Diagram](Task1_image.png)
 
 ---
 
