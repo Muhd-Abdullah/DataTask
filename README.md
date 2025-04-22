@@ -1,12 +1,12 @@
-# Data Vault 2.0 Data Warehouse Design
+# Data Warehouse Design
 
-This repository documents the design, implementation, and architecture of a Data Vault 2.0-based data warehouse integrating data from sales, order management, and freight systems. It includes end-to-end data modeling—from raw ingestion to business-ready InfoMarts—for analytics use cases such as sales performance, customer insights, and logistics tracking.
+This repository documents the design, implementation, and architecture of a Data Vault based data warehouse integrating data from sales, order management, and freight systems. It includes end-to-end data modeling—from raw ingestion to business-ready InfoMarts—for analytics use cases such as sales performance, customer insights, and logistics tracking.
 
 ## Overview
 
 The project is divided into two main domains:
 
-### Task 1: Sales Data Vault & Reporting Model
+### Task 1: Data Vault & Reporting Model
 - **Implements a Raw Vault** with Hubs, Links, and Satellites for sales transactions
 - **Business Vault** layer pivots and enriches KPI metrics (Quantity, TNS, TGS)
 - **Dimensional Model** (Star Schema) enables BI-friendly reporting
@@ -19,7 +19,7 @@ The project is divided into two main domains:
 - Designs fact tables for delivery performance, material movement, and order analysis
 
 ## Key Features
-- Data Vault 2.0 methodology: scalable, auditable, and extensible
+- Data Vault methodology: scalable, auditable, and extensible
 - Dimensional models for efficient querying (Fact & Dimension tables)
 - PIT tables and SCD logic for historization
 - Robust handling of semi-structured and late-arriving data
