@@ -17,30 +17,30 @@ This document presents the **Raw Vault** and **Business Vault** design for manag
   - [Flow Diagram](#flow-diagram)
     - [Breakdown:](#breakdown)
   - [Implementation and Decision Rationale](#implementation-and-decision-rationale)
-  - [SQL Statements (`RAW VAULT`)](#sql-statements-raw-vault)
+  - [SQL Statements (RAW VAULT)](#sql-statements-raw-vault)
     - [HUBS](#hubs)
-      - [`H_Customer`](#h_customer)
-      - [`H_Sales_Document`](#h_sales_document)
-      - [`H_Material`](#h_material)
-      - [`H_Sales_Organisation`](#h_sales_organisation)
-      - [`H_Distribution_Channel`](#h_distribution_channel)
+      - [H\_Customer](#h_customer)
+      - [H\_Sales\_Document](#h_sales_document)
+      - [H\_Material](#h_material)
+      - [H\_Sales\_Organisation](#h_sales_organisation)
+      - [H\_Distribution\_Channel](#h_distribution_channel)
     - [SATELLITES](#satellites)
-      - [`S_Customer`](#s_customer)
-      - [`S_Sales_Document`](#s_sales_document)
-      - [`S_Material`](#s_material)
-      - [`S_Sales_Organisation`](#s_sales_organisation)
-      - [`S_Transaction_Details_Pricing`](#s_transaction_details_pricing)
+      - [S\_Customer](#s_customer)
+      - [S\_Sales\_Document](#s_sales_document)
+      - [S\_Material](#s_material)
+      - [S\_Sales\_Organisation](#s_sales_organisation)
+      - [S\_Transaction\_Details\_Pricing](#s_transaction_details_pricing)
     - [LINK](#link)
-      - [`L_Transaction_Details`](#l_transaction_details)
-  - [SQL Statements (`BUSINESS VAULT`)](#sql-statements-business-vault)
-      - [`bv.S_Pivoted_KPI_Metrics`](#bvs_pivoted_kpi_metrics)
-  - [SQL Statements (`Dimensional Model`)](#sql-statements-dimensional-model)
-      - [`dim_date`](#dim_date)
-      - [`dim_customer`](#dim_customer)
-      - [`dim_material`](#dim_material)
-      - [`dim_sales_organisation`](#dim_sales_organisation)
-      - [`dim_distribution_channel`](#dim_distribution_channel)
-      - [`fact_sales_metrics`](#fact_sales_metrics)
+      - [L\_Transaction\_Details](#l_transaction_details)
+  - [SQL Statements (BUSINESS VAULT)](#sql-statements-business-vault)
+      - [bv.S\_Pivoted\_KPI\_Metrics](#bvs_pivoted_kpi_metrics)
+  - [SQL Statements (Dimensional Model)](#sql-statements-dimensional-model)
+      - [dim\_date](#dim_date)
+      - [dim\_customer](#dim_customer)
+      - [dim\_material](#dim_material)
+      - [dim\_sales\_organisation](#dim_sales_organisation)
+      - [dim\_distribution\_channel](#dim_distribution_channel)
+      - [fact\_sales\_metrics](#fact_sales_metrics)
 
 ## Source Query Structure
 
@@ -83,17 +83,17 @@ This table represents the output from the query that feeds into the Raw Vault.
 
 | Column Name            | Description                                  |
 |------------------------|----------------------------------------------|
-| `distribution channel` | Sales distribution channel (e.g., A0)        |
-| `sales_organization`   | Sales organization ID (e.g., 22)             |
-| `billing_doc_date`     | Date of the billing document                 |
-| `sales_document`       | Unique identifier for the sales document     |
-| `sales_group`          | Sales group within the organization          |
-| `material_id`          | Material identifier                          |
-| `material_text`        | Description or name of the material          |
-| `customer_no`          | Customer identifier                          |
-| `customer_name`        | Customer name                                |
-| `KPI_values`           | KPI type (e.g., Quantity, TGS, TNS)          |
-| `payload`              | Numeric or textual value associated with KPI |
+| distribution channel | Sales distribution channel (e.g., A0)        |
+| sales_organization   | Sales organization ID (e.g., 22)             |
+| billing_doc_date     | Date of the billing document                 |
+| sales_document       | Unique identifier for the sales document     |
+| sales_group          | Sales group within the organization          |
+| material_id          | Material identifier                          |
+| material_text        | Description or name of the material          |
+| customer_no          | Customer identifier                          |
+| customer_name        | Customer name                                |
+| KPI_values           | KPI type (e.g., Quantity, TGS, TNS)          |
+| payload              | Numeric or textual value associated with KPI |
 
 ---
 
@@ -107,11 +107,11 @@ The following diagram illustrates the **end-to-end data flow** across the differ
 
 ### Breakdown:
 
-- **Hubs** (`HUB: Customer`, `HUB: Material`, etc.) represent unique business keys.
-- **Satellites** (e.g., `Satellite: Sales_Document`) store descriptive and historical attributes.
-- **Link** (`LINK: L_Transaction_Details`) connects related hubs, forming the core transactional record.
-- **Business Vault Satellite** (`bv.S_Pivoted_KPI_Metrics`) performs metric aggregation and pivoting.
-- **Fact and Dimension Tables** (e.g., `fact_sales_metrics`, `dim_customer`) support performant reporting and visualization.
+- **Hubs** (HUB: Customer, HUB: Material, etc.) represent unique business keys.
+- **Satellites** (e.g., Satellite: Sales_Document) store descriptive and historical attributes.
+- **Link** (LINK: L_Transaction_Details) connects related hubs, forming the core transactional record.
+- **Business Vault Satellite** (bv.S_Pivoted_KPI_Metrics) performs metric aggregation and pivoting.
+- **Fact and Dimension Tables** (e.g., fact_sales_metrics, dim_customer) support performant reporting and visualization.
 
 This structured flow ensures **data integrity, scalability, and traceability** from source ingestion to final analytics.
 
@@ -121,13 +121,13 @@ This structured flow ensures **data integrity, scalability, and traceability** f
 
 ## Implementation and Decision Rationale
 
- 1. `HUB`: Distribution_Channel is converted to a HUB instead of a satellite, even though it only has id and no associated descriptive attributes because it is a distinct and reusable business concept that can exist independently. Distribution_Channel can be shared across customer, material or organisation with in transactions or when reporting. 
- 2. `Transaction Detail Link`: We have created single link which joins all the entities together instead of creating separate links joining two entities together as it depicts the exact behaviour of a transaction between different entities present.
- 3. `S_Transaction Detail Pricing`: This is connected with Transaction Detail Link as it hold metrics that are not connected with one entity. The metrics are formed by the combination of all the entities present within the system.
- 4. `Business Vault`: We are using the same Hubs and related satellites within the business vault as the data present is very limited and no new computed attributes or curated hubs were created. Hence, business vault is left with only one Satellite which pivots the KPI_Values to show quantity, TGS and TNS values plus on the basis of these calculates some additional metrics. Furthermore, no point in time table was created inside the business vault as no multiple satellites were used by the same hub.
- 5. `Dimensional Model`: Dimensional model was created using the business vault satellite and dimensions from the hubs plus satellites from the raw vault. They all have effective date, is_current and load_dts for slowly changing dimensions capture. Simple aggregations or metrics are left for to be handled within BI tool such as calculating quantity, TNS, TGS etc. per customer, organisation, distribution channel or top 5 materials used. *DIM_DATE* table is created to enrich fact tables with temporal attributes. It provides a detailed calendar structure that supports time-based filtering, grouping, and reporting.
+ 1. HUB: Distribution_Channel is converted to a HUB instead of a satellite, even though it only has id and no associated descriptive attributes because it is a distinct and reusable business concept that can exist independently. Distribution_Channel can be shared across customer, material or organisation with in transactions or when reporting. 
+ 2. Transaction Detail Link: We have created single link which joins all the entities together instead of creating separate links joining two entities together as it depicts the exact behaviour of a transaction between different entities present.
+ 3. S_Transaction Detail Pricing: This is connected with Transaction Detail Link as it hold metrics that are not connected with one entity. The metrics are formed by the combination of all the entities present within the system.
+ 4. Business Vault: We are using the same Hubs and related satellites within the business vault as the data present is very limited and no new computed attributes or curated hubs were created. Hence, business vault is left with only one Satellite which pivots the KPI_Values to show quantity, TGS and TNS values plus on the basis of these calculates some additional metrics. Furthermore, no point in time table was created inside the business vault as no multiple satellites were used by the same hub.
+ 5. Dimensional Model: Dimensional model was created using the business vault satellite and dimensions from the hubs plus satellites from the raw vault. They all have effective date, is_current and load_dts for slowly changing dimensions capture. Simple aggregations or metrics are left for to be handled within BI tool such as calculating quantity, TNS, TGS etc. per customer, organisation, distribution channel or top 5 materials used. *DIM_DATE* table is created to enrich fact tables with temporal attributes. It provides a detailed calendar structure that supports time-based filtering, grouping, and reporting.
 
-## SQL Statements (`RAW VAULT`)
+## SQL Statements (RAW VAULT)
 
 The *Raw Vault* is the foundational layer of the Data Vault architecture. It captures raw, auditable, and historical data from source systems with no transformations or business rules applied. This layer includes Hubs (business keys), Links (relationships), and Satellites (descriptive context) — designed for flexibility, scalability, and auditability.
 
@@ -143,7 +143,7 @@ Each hub represents a **unique business key**. We use them to ensure traceabilit
 | H_Sales_Organisation | sales_organization| Sales organizational unit |
 | H_Distribution_Channel | distribution_channel | Sales distribution path |
 
-#### `H_Customer`
+#### H_Customer
 
 The *H_Customer* table is a Hub that stores the unique business key for each customer in the sales data. This Hub ensures traceability, allows for historical tracking of customer-related events, and forms the base for any descriptive data about customers stored in associated satellites (e.g., names, addresses, etc.).
 
@@ -156,7 +156,7 @@ CREATE TABLE H_Customer (
 );
 ```
 
-#### `H_Sales_Document`
+#### H_Sales_Document
 
 The *H_Sales_Document* table is a Hub that captures the unique sales transaction identifiers (sales_document). This is a central entity in any sales process and serves as the anchor for transactional relationships in the vault. All event-level and descriptive information about a sales transaction is tracked through this hub and its related satellites and links.
 
@@ -169,7 +169,7 @@ CREATE TABLE H_Sales_Document (
 );
 ```
 
-#### `H_Material`
+#### H_Material
 
 The *H_Material* table serves as a Hub for uniquely identifying each material in the dataset. In sales analysis, the material ID is essential for product-level reporting, performance tracking, and inventory evaluations. This hub links to satellite tables storing material descriptions and other attributes.
 
@@ -182,7 +182,7 @@ CREATE TABLE H_Material (
 );
 ```
 
-#### `H_Sales_Organisation`
+#### H_Sales_Organisation
 
 The *H_Sales_Organisation* Hub captures unique sales organizations, such as departments, branches, or legal entities managing the sales process. This hub supports enterprise-wide reporting and roll-ups by business unit.
 
@@ -195,7 +195,7 @@ CREATE TABLE H_Sales_Organisation (
 );
 ```
 
-#### `H_Distribution_Channel`
+#### H_Distribution_Channel
 
 The *H_Distribution_Channel* table acts as a Hub for different sales distribution methods (e.g., online, retail, wholesale). This enables channel-based reporting and performance analysis. It allows you to track how material are sold and to whom.
 
@@ -214,15 +214,15 @@ Satellites store **descriptive attributes** and **contextual information** tied 
 
 | Satellite Table                 | Attached To             | Description |
 |--------------------------------|--------------------------|-------------|
-| `S_Customer`                   | `H_Customer`             | Stores customer name and tracks changes |
-| `S_Sales_Document`            | `H_Sales_Document`       | Holds billing document date |
-| `S_Material`                  | `H_Material`             | Contains material description |
-| `S_Sales_Organisation`        | `H_Sales_Organisation`   | Tracks sales group info |
-| `S_Transaction_Details_Pricing` | `L_Transaction_Details` | Stores KPI metrics (Quantity, TGS, TNS) related to transactions |
+| S_Customer                  | H_Customer            | Stores customer name and tracks changes |
+| S_Sales_Document            | H_Sales_Document      | Holds billing document date |
+| S_Material                  | H_Material            | Contains material description |
+| S_Sales_Organisation        | H_Sales_Organisation   | Tracks sales group info |
+| S_Transaction_Details_Pricing | `L_Transaction_Details | Stores KPI metrics (Quantity, TGS, TNS) related to transactions |
 
 ---
 
-#### `S_Customer`
+#### S_Customer
 
 The *S_Customer* table is a Satellite connected to the *H_Customer* hub. It stores descriptive attributes of the customer entity, such as the customer's name.
 
@@ -238,7 +238,7 @@ CREATE TABLE S_Customer (
 );
 ```
 
-#### `S_Sales_Document`
+#### S_Sales_Document
 
 The *S_Sales_Document* satellite provides transactional context to the *H_Sales_Document* hub. It stores attributes like the billing document date.
 
@@ -254,7 +254,7 @@ CREATE TABLE S_Sales_Document (
 );
 ```
 
-#### `S_Material`
+#### S_Material
 
 The *S_Material* satellite is linked to the *H_Material* hub. It holds material metadata, such as the material text/description.
 
@@ -270,7 +270,7 @@ CREATE TABLE S_Material (
 );
 ```
 
-#### `S_Sales_Organisation`
+#### S_Sales_Organisation
 
 The *S_Sales_Organisation* satellite connects to the *H_Sales_Organisation* hub and holds additional organizational structure information, such as the sales group. It enables granular organizational analysis over time.
 
@@ -286,7 +286,7 @@ CREATE TABLE S_Sales_Organisation (
 );
 ```
 
-#### `S_Transaction_Details_Pricing`
+#### S_Transaction_Details_Pricing
 
 The *S_Transaction_Details_Pricing* satellite links to the *L_Transaction_Details* link and stores KPI-related facts. This satellite supports multi-grain fact storage and allows us to handle metric pivoting and analysis in the Business Vault.
 
@@ -309,11 +309,11 @@ Links model the **associative relationships** between business keys (Hubs) and f
 
 | Link Table             | Connected Hubs                                                                 | Description |
 |------------------------|----------------------------------------------------------------------------------|-------------|
-| `L_Transaction_Details` | `H_Customer`, `H_Sales_Document`, `H_Material`, `H_Sales_Organisation`, `H_Distribution_Channel` | Connects all relevant entities involved in a single sales transaction |
+| L_Transaction_Details | H_Customer, H_Sales_Document, H_Material, H_Sales_Organisation, H_Distribution_Channel | Connects all relevant entities involved in a single sales transaction |
 
 ---
 
-#### `L_Transaction_Details`
+#### L_Transaction_Details
 
 The *L_Transaction_Details* table is a Link that captures the many-to-many relationship between the core business entities involved in a sales transaction — including customer, sales document, sales organization, distribution channel, and material.
 
@@ -337,11 +337,11 @@ CREATE TABLE L_Transaction_Details (
 );
 ```
 
-## SQL Statements (`BUSINESS VAULT`)
+## SQL Statements (BUSINESS VAULT)
 
 The *Business Vault* adds business logic, aggregations, and denormalized views on top of the Raw Vault. It’s where data becomes ready for analytical consumption while retaining auditability.
 
-#### `bv.S_Pivoted_KPI_Metrics`
+#### bv.S_Pivoted_KPI_Metrics
 
 This table is a Business Vault satellite that pivots the raw KPI values (Quantity, TGS, TNS)  and also derives additional performance indicators such as gross_profit, profit_margin_pct, avg_selling_price, and avg_net_price into columns for easier aggregation and analysis. It groups metrics by customer, material, sales organization, and distribution channel.
 
@@ -388,11 +388,11 @@ GROUP BY
   l.Distribution_Channel_HKey;
 ```
 
-## SQL Statements (`Dimensional Model`)
+## SQL Statements (Dimensional Model)
 
 The *Dimensional Model* is designed for optimized querying and reporting. It transforms the detailed, historical structure of the Data Vault into a denormalized star schema, featuring fact and dimension tables.
 
-#### `dim_date`
+#### dim_date
 
 The *dim_date* table is a time dimension used to enrich fact tables with temporal attributes. It provides a detailed calendar structure that supports time-based filtering, grouping, and reporting.
 
@@ -411,7 +411,7 @@ CREATE TABLE IF NOT EXISTS dim_date (
 );
 ```
 
-#### `dim_customer`
+#### dim_customer
 
 The *dim_customer* table is a slowly changing dimension (SCD Type 2) that stores customer names and history. It allows tracking of customer attribute changes over time using effective/expiration dates and an Is_Current flag.
 
@@ -432,7 +432,7 @@ SELECT
 FROM S_Customer s;
 ```
 
-#### `dim_material`
+#### dim_material
 
 The *dim_material* table is a dimension table capturing material descriptions. Like the customer dimension, it implements SCD Type 2 logic.
 
@@ -453,7 +453,7 @@ SELECT
 FROM S_Material s;
 ```
 
-#### `dim_sales_organisation`
+#### dim_sales_organisation
 
 The *dim_sales_organisation* holds information about the sales organization structure, such as the sales group. It is modeled as a slowly changing dimension to reflect organizational changes over time.
 
@@ -474,7 +474,7 @@ SELECT
 FROM S_Sales_Organisation s;
 ```
 
-#### `dim_distribution_channel` 
+#### dim_distribution_channel
 
 The *dim_distribution_channel* is a static dimension, as distribution channels rarely change. It maps the raw distribution channel identifiers into a consistent reference for reporting and slicing metrics.
 
@@ -492,7 +492,7 @@ SELECT
 FROM H_Distribution_Channel dc;
 ```
 
-#### `fact_sales_metrics`
+#### fact_sales_metrics
 
 The *fact_sales_metrics* table is the central fact table in the star schema. It holds aggregated KPI values such as quantity, TNS (Total Net Sales), and TGS (Total Gross Sales), and foreign keys to all related dimensions.
 
