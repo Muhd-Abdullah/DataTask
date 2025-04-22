@@ -8,20 +8,67 @@ This documentation describes the design and implementation of a data warehouse t
 
 - [Data Model Documentation](#data-model-documentation)
   - [Table of Contents](#table-of-contents)
-  - [Implementation and Decision Rationale](#implementation-and-decision-rationale)
+  - [Identification of Challanges](#identification-of-challanges)
   - [Flow Diagram](#flow-diagram)
       - [Source System](#source-system)
       - [Staging Area](#staging-area)
       - [Raw and Business Vault](#raw-and-business-vault)
       - [InfoMart](#infomart)
 
-## Implementation and Decision Rationale
+## Identification of Challanges
 
+The following challenges must be addressed to ensure data integrity, consistency, and performance across the data warehouse solution
+
+1. **Matching Data Between System (Internal vs FTP)**
+
+    The internal delivery system and the freight forwarder's truck feedback table may use different identifiers or formats. A mapping or transformation logic must be developed to synchronize delivery references. 
+
+2. **Data Quality**
+
+    Data may contain duplicate records, inconsistent keys, or malformed entries. Implement quality checks during ingestion (e.g., null checks, uniqueness constraints) and deduplication rules to ensure only clean records proceed to the vault layer.
+
+3. **Aligning Time Zones and Formats**
+
+    Different systems may use varied timestamp formats and time zones. Normalize all timestamps in the ETL layer to a standard time zone (e.g., UTC) and use the DimDate for accurate time-based analysis.
+
+4. **Use of PIT (Point-In-Time) Tables**
+
+    Orders and deliveries have multiple satellites (headers, lines, feedback, etc.) that may not change at the same time. Build PIT tables for Order and Delivery to allow consistent and performant access to the latest or relevant historical states.
+
+5. **Managing Slowly Changing Dimensions (SCD)**
+
+    Decide on an SCD approach:
+
+        - Type 1 (overwrite) for non-critical history
+
+        - Type 2 (versioned records) for full historization
+
+6. **Late-Arriving Data and Out-of-Sequence Events**
+
+    External sources such as FTP File, may arrive late or be reprocessed. Implement effective-dated loading and hash comparison logic to support late-arriving records without overwriting newer data unintentionally.
+
+7. **Data Volume & Performance Scalability**
+
+    As volume grows, maintaining performance during loading, transformation, and querying can be difficult. Plan for partitioning strategies, columnar storage, and workload management.
+
+8. **Handling of Semi-Structured Data**
+
+    Excel files and FTP sources may contain semi-structured fields or inconsistent data due to manual input errors. Transforming this information into clean, atomic, and model-ready fields can be challenging and demands robust pre-processing logic.
+
+9. **Orchestration & Monitoring of the ETL Workflow**
+
+    Complex data pipelines spanning source ingestion, vault loading, and InfoMart refresh need proper orchestration (Airflow, dbt, etc.). Add monitoring for job failures, file arrival, row count anomalies, etc.
+
+10. **False Positives**
+
+    False positives may arise during hash-based change detection (e.g., due to whitespace or case differences), or overly strict data quality rules in staging. These can lead to unnecessary versioning, incorrect record associations, or valid data being flagged as invalid. Proper normalization, thresholding, and validation logic are essential to mitigate this risk.
+
+    
 ## Flow Diagram
 
 This flow diagram illustrates the end-to-end data pipeline, from source systems to business intelligence-ready InfoMarts, using a Data Vault approach.
 
-![Flow Diagram](image-1.png)
+![Flow Diagram](Task2_image.png)
 
 #### Source System
 
